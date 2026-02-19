@@ -168,8 +168,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.ok) {
                     const data = await response.json();
                     
-                    if (data.responses && data.responses.length > 0) {
-                        const allResponses = data.responses;
+                    if (data.analyses && data.analyses.length > 0) {
+                        const allResponses = data.analyses;
                         
                         // Store the first response for tab display
                         currentResponse = allResponses[0];

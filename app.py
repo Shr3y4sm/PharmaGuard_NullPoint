@@ -17,6 +17,9 @@ app = Flask(__name__)
 # Set maximum file upload size to 5MB
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB in bytes
 
+# Preserve JSON field order (Flask 3.0+ style)
+app.json.sort_keys = False
+
 # Load CPIC data at startup
 try:
     CPIC_ENGINE = initialize_cpic_engine("data/cpic_gene-drug_pairs.xlsx")

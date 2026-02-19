@@ -78,7 +78,7 @@ def build_response_json(
         "data_completeness": "high" if variant_count > 0 else "low"
     }
     
-    # Build main response
+    # Build main response in exact field order as required by schema
     response = {
         "patient_id": patient_id,
         "drug": drug,
@@ -100,7 +100,7 @@ def build_response_json(
         "quality_metrics": quality_metrics
     }
     
-    # Add guideline_url if available
+    # Add guideline_url at end if available (optional field)
     if guideline_url:
         response["guideline_url"] = guideline_url
     
