@@ -12,13 +12,15 @@
 </head>
 <body>
 
-    <div class="container">
         <header class="top-header">
             PharmGuard
         </header>
 
+        <div class="container">
         <section class="card card-padded">
-            <h2 class="section-title">ADD YOUR DATA</h2>
+            <div class="form-head"><h2 class="section-title">ADD YOUR DATA</h2></div>
+
+            <form action="#">
             
             <div class="input-row">
                 <div class="input-group">
@@ -26,11 +28,15 @@
                     <input type="text" id="enter-drugs" class="form-control" value="Drug1, CODEINE" placeholder="E.g. Drug1, CODEINE">
                 </div>
                 
-                <div class="input-group">
+                <div class="input-group select-group">
                     <label for="suggested-drugs">Suggested drugs</label>
                     <select id="suggested-drugs" class="form-control">
                         <option value="CODEINE" selected>CODEINE</option>
-                        <option value="ASPIRIN">ASPIRIN</option>
+                        <option value="ASPIRIN">WARFARIN</option>
+                        <option value="ASPIRIN">CLOPIDOGREL</option>
+                        <option value="ASPIRIN">SIMVASTATIN</option>
+                        <option value="ASPIRIN">AZATHIOPRINE</option>
+                        <option value="ASPIRIN">FLUOROURACIL</option>
                     </select>
                 </div>
             </div>
@@ -39,7 +45,7 @@
                 <span class="upload-label">Add your VCF data</span>
                 <input type="file" id="vcf-upload" accept=".vcf" style="display: none;">
                 <label for="vcf-upload" class="upload-area">
-                    <i class="ri-upload-2-line"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19ZM13 9V16H11V9H6L12 3L18 9H13Z"></path></svg>
                     <div class="upload-text">
                         Add .vcf file<br>
                         (Max. size of 5MB)
@@ -48,17 +54,20 @@
             </div>
 
             <button class="btn-primary">Analyse Drug Risk</button>
+            </form>
         </section>
+        </div>
 
+        <div class="container">
         <section class="card card-padded results-section">
             <div class="results-header-area">
-                <div>
+                <div class="badge-container">
                     <h2 class="results-title">Drug Risk Analyzed</h2>
                     <div class="text-green">Intake Severity: Low</div>
                 </div>
                 <div class="badge-container">
                     <div class="badge-safe">Drug Intake: Safe</div>
-                    <div class="text-green">Model Confidence: 0.8%</div>
+                    <div class="text-green confidence">Model Confidence: 0.8%</div>
                 </div>
             </div>
 
@@ -78,16 +87,27 @@
             <div class="json-header">
                 <div class="json-title-group">
                     JSON Data
-                    <i class="ri-file-download-line"></i>
+                    <svg id="download" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M13 12H16L12 16L8 12H11V8H13V12ZM15 4H5V20H19V8H15V4ZM3 2.9918C3 2.44405 3.44749 2 3.9985 2H16L20.9997 7L21 20.9925C21 21.5489 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5447 3 21.0082V2.9918Z"></path></svg>
                 </div>
-                <i class="ri-clipboard-line"></i>
+                <svg id="copy" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4V2H17V4H20.0066C20.5552 4 21 4.44495 21 4.9934V21.0066C21 21.5552 20.5551 22 20.0066 22H3.9934C3.44476 22 3 21.5551 3 21.0066V4.9934C3 4.44476 3.44495 4 3.9934 4H7ZM7 6H5V20H19V6H17V8H7V6ZM9 4V6H15V4H9Z"></path></svg>
             </div>
             <div class="json-content">
-                <pre>{}{}{}</pre>
+                <pre id="json-data">{ "patient_id": "PATIENT_XXX",
+  "drug": "DRUG_NAME",
+  "timestamp": "ISO8601_timestamp",
+  "risk_assessment": { "risk_label": "Safe|Adjust Dosage|Toxic|...",
+    "confidence_score": 0.0, "severity": "none|low|moderate|high|critical" },
+  "pharmacogenomic_profile": { "primary_gene": "GENE_SYMBOL",
+    "diplotype": "*X/*Y", "phenotype": "PM|IM|NM|RM|URM|Unknown",
+    "detected_variants": [ { "rsid": "rsXXXX", ... } ] },
+  "clinical_recommendation": { ... },
+  "llm_generated_explanation": { "summary": "...", ... },
+  "quality_metrics": { "vcf_parsing_success": true, ... }
+}</pre>
             </div>
         </section>
+        </div>
 
-    </div>
-
+<script src="./static/js/script.js"></script>
 </body>
 </html>
