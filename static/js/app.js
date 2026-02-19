@@ -456,7 +456,7 @@ function getRiskClass(riskLabel) {
         return 'text-6xl font-bold text-green-500 tracking-tight';
     } else if (riskUpper.includes('MODERATE') || riskUpper.includes('CAUTION')) {
         return 'text-6xl font-bold text-yellow-500 tracking-tight';
-    } else if (riskUpper.includes('HIGH') || riskUpper.includes('CRITICAL')) {
+    } else if (riskUpper.includes('HIGH') || riskUpper.includes('CRITICAL') || riskUpper.includes('TOXIC')) {
         return 'text-6xl font-bold text-red-500 tracking-tight';
     }
     return 'text-6xl font-bold text-gray-500 tracking-tight';
@@ -485,7 +485,7 @@ function getSeverityColors(riskLabel) {
             bgColor: 'bg-yellow-100',
             textColor: 'text-yellow-800'
         };
-    } else if (riskUpper.includes('HIGH') || riskUpper.includes('CRITICAL')) {
+    } else if (riskUpper.includes('HIGH') || riskUpper.includes('CRITICAL') || riskUpper.includes('TOXIC')) {
         return {
             bgColor: 'bg-red-100',
             textColor: 'text-red-800'
@@ -510,7 +510,7 @@ function updateGauge(confidence, riskLabel) {
     let color = '#22c55e'; // green (safe)
     if (riskUpper.includes('MODERATE') || riskUpper.includes('CAUTION')) {
         color = '#eab308'; // yellow
-    } else if (riskUpper.includes('HIGH') || riskUpper.includes('CRITICAL')) {
+    } else if (riskUpper.includes('HIGH') || riskUpper.includes('CRITICAL') || riskUpper.includes('TOXIC')) {
         color = '#ef4444'; // red
     }
     elements.gaugeArc.setAttribute('stroke', color);
