@@ -11,8 +11,8 @@
 
 ## 📺 Demo & Presentation
 
-- **🌐 Live Demo:** [Coming Soon]
-- **🎥 LinkedIn Video:** [Watch Demo](https://linkedin.com/in/your-profile)
+- **🌐 Live Demo:** https://pharmaguard-nullpoint.onrender.com/
+- **🎥 LinkedIn Video:** 
 
 ---
 
@@ -85,7 +85,7 @@ python app.py
 Test with sample file:
 - Upload: `data/sample_poor_metabolizer.vcf`
 - Drug: `CODEINE`
-- Expected: HIGH RISK ⚠️ warning
+
 
 ---
 
@@ -210,7 +210,7 @@ Test with sample file:
 ### **AI & Data**
 | Service | Purpose |
 |---------|---------|
-| **Google Gemini 1.5 Flash** | LLM-powered clinical recommendations |
+| **Google Gemini 2.5 Flash** | LLM-powered clinical recommendations |
 | **CPIC Database** | Pharmacogenomic guidelines (300+ drugs) |
 | **Custom Phenotype Engine** | 650+ diplotype-to-phenotype mappings |
 
@@ -853,12 +853,10 @@ PharmaGuard_NullPoint/
 
 ### NullPoint Team
 
-| Name | Role | LinkedIn | GitHub |
-|------|------|----------|--------|
-| **[Your Name]** | Full Stack Developer & AI Engineer | [LinkedIn](https://linkedin.com/in/your-profile) | [GitHub](https://github.com/Shr3y4sm) |
-| **[Team Member 2]** | Backend Developer | [LinkedIn](#) | [GitHub](#) |
-| **[Team Member 3]** | Frontend Developer | [LinkedIn](#) | [GitHub](#) |
-| **[Team Member 4]** | Data Scientist | [LinkedIn](#) | [GitHub](#) |
+| **Shreyas M** | 
+| **Harshavardhan K** |
+| **Ramanuja U K** |
+| **Jagannath Nayak** |
 
 ### Contributions
 
@@ -901,24 +899,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
+
+- **RIFT 2026 HACKATHON, PW Institute of Innovation**
 - **CPIC (Clinical Pharmacogenetics Implementation Consortium)** for pharmacogenomic guidelines
 - **Google Gemini AI** for LLM-powered clinical recommendations
 - **Open-source community** for libraries and tools (Flask, pandas, etc.)
 
----
-
-## 📞 Contact & Support
-
-- **Issues:** [GitHub Issues](https://github.com/Shr3y4sm/PharmaGuard_NullPoint/issues)
-- **Email:** your.email@example.com
-- **LinkedIn:** [Connect with us](https://linkedin.com/in/your-profile)
-
----
-
 <div align="center">
-
-### ⭐ If you find this project useful, please consider giving it a star!
-
-**Made with ❤️ by Team NullPoint**
 
 </div>
