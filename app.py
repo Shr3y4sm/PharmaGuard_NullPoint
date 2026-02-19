@@ -1,11 +1,21 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from services.cpic_loader import load_cpic_data
 from cpic_engine import initialize_cpic_engine
 from services.vcf_parser import parse_vcf
 from services.drug_gene_matcher import match_drug_with_vcf
 from services.phenotype_engine import determine_phenotype
+from services.response_builder import build_response_json, prepare_llm_prompt, format_response_for_json_output
+from services.llm_service import get_llm_provider
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
+
+# Set maximum file upload size to 5MB
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB in bytes
 
 # Load CPIC data at startup
 try:
@@ -14,10 +24,32 @@ except Exception as e:
     print(f"Fatal error: Could not load CPIC data - {e}")
     raise
 
+# Initialize LLM provider (optional)
+LLM_PROVIDER = None
+try:
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        LLM_PROVIDER = get_llm_provider("gemini", api_key)
+        print("✓ Google Gemini API initialized")
+    else:
+        print("⚠ GOOGLE_API_KEY not found. LLM features disabled. Set GOOGLE_API_KEY environment variable to enable.")
+except Exception as e:
+    print(f"⚠ Warning: Could not initialize LLM provider - {e}")
+    print("LLM features will be disabled. Set GOOGLE_API_KEY environment variable to enable.")
+
 
 @app.route('/')
 def hello_world():
     return render_template('index.html')
+
+
+@app.errorhandler(413)
+def file_too_large(e):
+    """Handle file size limit exceeded error."""
+    return jsonify({
+        "error": "File too large",
+        "details": "The uploaded file exceeds the 5MB size limit. Please upload a smaller VCF file."
+    }), 413
 
 
 @app.route('/analyze', methods=['POST'])
@@ -62,6 +94,7 @@ def analyze():
         
         # Build results
         results = []
+        json_responses = []
         
         for drug in drug_list:
             print(f"\n--- Processing drug: {drug} ---")
@@ -94,6 +127,32 @@ def analyze():
                 }
                 results.append(result_entry)
                 print(f"Added to results: {result_entry}")
+                
+                # Build structured JSON response
+                json_response = build_response_json(
+                    drug=match_result.get('drug'),
+                    gene=gene,
+                    phenotype=phenotype_result.get('phenotype'),
+                    diplotype=phenotype_result.get('diplotype'),
+                    variant_count=variant_count,
+                    variants=gene_variants,
+                    vcf_parsing_success=vcf_data.get('vcf_parsing_success'),
+                    cpic_level=match_result.get('cpic_level')
+                )
+                json_responses.append(json_response)
+                
+                # Prepare LLM prompt (for future LLM integration)
+                llm_prompt = prepare_llm_prompt(
+                    drug=match_result.get('drug'),
+                    gene=gene,
+                    phenotype=phenotype_result.get('phenotype'),
+                    diplotype=phenotype_result.get('diplotype'),
+                    cpic_level=match_result.get('cpic_level'),
+                    variants=gene_variants
+                )
+                print(f"LLM Prompt prepared for {drug}")
+                
+                print(f"JSON Response: {json_response}")
             
             elif match_result.get('valid'):
                 # Drug is valid but gene not found in VCF
@@ -120,14 +179,143 @@ def analyze():
         
         print(f"\n{'=' * 60}")
         print(f"Analysis complete. Total results: {len(results)}")
-        print(f"Results: {results}")
+        print(f"Total JSON responses: {len(json_responses)}")
+        
+        # Print all JSON responses
+        for i, json_resp in enumerate(json_responses, 1):
+            print(f"\nJSON Response {i}:")
+            print(format_response_for_json_output(json_resp))
         
         # Pass results to template
-        return render_template('index.html', results=results, vcf_parsed=True)
+        return render_template('index.html', results=results, vcf_parsed=True, json_responses=json_responses)
     
     except Exception as e:
         print(f"Unexpected error in /analyze: {str(e)}")
         return render_template('index.html', error=f"Analysis error: {str(e)}")
+
+
+@app.route('/api/analysis', methods=['POST'])
+def api_analysis():
+    """
+    API endpoint that returns structured JSON responses for VCF analysis.
+    This endpoint is designed for programmatic access and LLM integration.
+    """
+    try:
+        # Get uploaded VCF file
+        if 'vcf_file' not in request.files:
+            return jsonify({"error": "No VCF file provided"}), 400
+        
+        vcf_file = request.files['vcf_file']
+        if vcf_file.filename == '':
+            return jsonify({"error": "No VCF file selected"}), 400
+        
+        # Get drug input
+        drugs_input = request.form.get('drugs', '')
+        if not drugs_input:
+            return jsonify({"error": "No drugs provided"}), 400
+        
+        # Parse VCF file
+        vcf_data = parse_vcf(vcf_file)
+        print(f"VCF Parse Result: {vcf_data.get('vcf_parsing_success')}")
+        
+        if not vcf_data.get('vcf_parsing_success'):
+            return jsonify({
+                "error": "VCF parsing failed",
+                "details": vcf_data.get('error', 'Unknown error')
+            }), 400
+        
+        # Split drugs by comma
+        drug_list = [d.strip() for d in drugs_input.split(',') if d.strip()]
+        print(f"Drug list to analyze: {drug_list}")
+        print(f"CPIC_ENGINE keys: {list(CPIC_ENGINE.keys())}")
+        print(f"VCF variants keys: {list(vcf_data.get('variants', {}).keys())}")
+        
+        # Build JSON responses
+        json_responses = []
+        
+        for drug in drug_list:
+            print(f"\n--- Processing drug: {drug} ---")
+            print(f"Drug in CPIC_ENGINE: {drug in CPIC_ENGINE}")
+            if drug in CPIC_ENGINE:
+                print(f"CPIC data for {drug}: {CPIC_ENGINE[drug]}")
+            
+            # Match drug with VCF data
+            match_result = match_drug_with_vcf(drug, vcf_data, CPIC_ENGINE)
+            print(f"Match result: {match_result}")
+            print(f"  - valid: {match_result.get('valid')}")
+            print(f"  - gene: {match_result.get('gene')}")
+            print(f"  - gene_found_in_vcf: {match_result.get('gene_found_in_vcf')}")
+            print(f"  - variant_count: {match_result.get('variant_count')}")
+            
+            if match_result.get('valid') and match_result.get('gene_found_in_vcf'):
+                gene = match_result.get('gene')
+                
+                # Get variants for this gene
+                gene_variants = vcf_data['variants'].get(gene, [])
+                print(f"Gene variants: {gene_variants}")
+                
+                # Determine phenotype
+                phenotype_result = determine_phenotype(gene, gene_variants)
+                print(f"Phenotype: {phenotype_result}")
+                
+                # Generate clinical recommendation using LLM
+                llm_result = None
+                if LLM_PROVIDER:
+                    try:
+                        print(f"Calling Gemini API for {drug}...")
+                        llm_prompt = prepare_llm_prompt(
+                            drug=match_result.get('drug'),
+                            gene=gene,
+                            phenotype=phenotype_result.get('phenotype'),
+                            diplotype=phenotype_result.get('diplotype'),
+                            cpic_level=match_result.get('cpic_level'),
+                            variants=gene_variants
+                        )
+                        llm_result = LLM_PROVIDER.generate_clinical_recommendation(llm_prompt)
+                        print(f"LLM response: {llm_result}")
+                    except Exception as e:
+                        print(f"⚠ LLM API error: {e}")
+                        llm_result = None
+                
+                # Build structured JSON response
+                json_response = build_response_json(
+                    drug=match_result.get('drug'),
+                    gene=gene,
+                    phenotype=phenotype_result.get('phenotype'),
+                    diplotype=phenotype_result.get('diplotype'),
+                    variant_count=match_result.get('variant_count', 0),
+                    variants=gene_variants,
+                    vcf_parsing_success=vcf_data.get('vcf_parsing_success'),
+                    cpic_level=match_result.get('cpic_level'),
+                    clinical_recommendation=llm_result.get('clinical_recommendation') if llm_result else None,
+                    llm_explanation=llm_result.get('llm_generated_explanation') if llm_result else None
+                )
+                json_responses.append(json_response)
+                print(f"Added response for {drug}")
+            else:
+                print(f"Drug {drug} not valid or no variants: valid={match_result.get('valid')}, gene_found={match_result.get('gene_found_in_vcf')}")
+        
+        print(f"\nTotal responses: {len(json_responses)}")
+        
+        return jsonify({
+            "success": True,
+            "responses": json_responses,
+            "total_results": len(json_responses),
+            "debug": {
+                "vcf_genes_found": list(vcf_data.get('variants', {}).keys()),
+                "cpic_drugs_loaded": list(CPIC_ENGINE.keys()),
+                "drugs_requested": drug_list
+            }
+        }), 200
+    
+    except Exception as e:
+        print(f"Unexpected error in /api/analysis: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "error": "Analysis error",
+            "details": str(e)
+        }), 500
 
 
 if __name__ == '__main__':

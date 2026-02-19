@@ -6,9 +6,10 @@ SUPPORTED_DRUGS = [
     "WARFARIN",
     "CLOPIDOGREL",
     "SIMVASTATIN",
-    "AZATHIOPRINE",
     "FLUOROURACIL"
 ]
+
+# Note: AZATHIOPRINE removed - not available in current CPIC dataset
 
 
 def initialize_cpic_engine(filepath: str) -> dict:
@@ -26,6 +27,17 @@ def initialize_cpic_engine(filepath: str) -> dict:
         Dictionary containing only supported drugs with their gene/cpic_level data
         Example: {"CODEINE": {"gene": "CYP2D6", "cpic_level": "A"}}
     """
+    
+    # Supported pharmacogenomic genes
+    SUPPORTED_GENES = {
+        "CYP2D6",
+        "CYP2C19",
+        "CYP2C9",
+        "SLCO1B1",
+        "TPMT",
+        "DPYD"
+    }
+    
     # Load all CPIC data
     all_cpic_data = load_cpic_data(filepath)
     
@@ -34,7 +46,12 @@ def initialize_cpic_engine(filepath: str) -> dict:
     
     for drug in SUPPORTED_DRUGS:
         if drug in all_cpic_data:
-            supported_cpic_data[drug] = all_cpic_data[drug]
+            drug_info = all_cpic_data[drug]
+            gene = drug_info.get("gene", "").upper()
+            
+            # Only include if gene is in supported genes
+            if gene in SUPPORTED_GENES:
+                supported_cpic_data[drug] = drug_info
     
     # Check for missing drugs
     loaded_drugs = set(supported_cpic_data.keys())

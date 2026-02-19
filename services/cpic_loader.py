@@ -62,14 +62,16 @@ def load_cpic_data(filepath: str) -> dict:
         drug_key = str(drug).strip().upper()
         gene_value = str(gene).strip()
         
-        # Build the entry
-        entry = {"gene": gene_value}
-        
-        # Add CPIC Level if it exists and is not null
-        if "CPIC Level" in df.columns and pd.notna(row["CPIC Level"]):
-            entry["cpic_level"] = str(row["CPIC Level"]).strip()
-        
-        cpic_data[drug_key] = entry
+        # Only add if this drug hasn't been added yet (keep first entry)
+        if drug_key not in cpic_data:
+            # Build the entry
+            entry = {"gene": gene_value}
+            
+            # Add CPIC Level if it exists and is not null
+            if "CPIC Level" in df.columns and pd.notna(row["CPIC Level"]):
+                entry["cpic_level"] = str(row["CPIC Level"]).strip()
+            
+            cpic_data[drug_key] = entry
     
     # Print confirmation message
     print(f"Loaded {len(cpic_data)} drugs from CPIC data")

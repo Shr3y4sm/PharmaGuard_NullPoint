@@ -153,11 +153,19 @@ select.form-control option {
 	justify-content: center;
 	color: var(--text-muted);
 	cursor: pointer;
-	transition: background-color 0.2s;
+	transition: all 0.3s ease;
 }
 
 .upload-area:hover {
 	background-color: rgba(255, 255, 255, 0.02);
+	border-color: var(--cyan-accent);
+}
+
+.upload-area.drag-over {
+	background-color: rgba(0, 234, 255, 0.1);
+	border-color: var(--cyan-accent);
+	border-style: solid;
+	transform: scale(1.02);
 }
 
 .upload-icon {
@@ -237,6 +245,45 @@ select.form-control option {
 	font-weight: 600;
 }
 
+.badge-adjust-dosage {
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #ff9800;
+	color: #fff;
+	padding: 20px;
+	border-radius: 4px;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.badge-toxic {
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #f44336;
+	color: #fff;
+	padding: 20px;
+	border-radius: 4px;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.badge-review-required {
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #2196f3;
+	color: #fff;
+	padding: 20px;
+	border-radius: 4px;
+	font-size: 20px;
+	font-weight: 600;
+}
+
 .confidence {
 	color: #21b53c;
 }
@@ -274,6 +321,23 @@ select.form-control option {
 	font-size: 22px;
 	line-height: 1.5;
 	color: #eeeeee;
+}
+
+.tab-content p {
+	margin: 10px 0;
+}
+
+.tab-content strong {
+	color: var(--cyan-accent);
+}
+
+.tab-content ul {
+	margin: 10px 0 10px 20px;
+	list-style-type: disc;
+}
+
+.tab-content li {
+	margin: 5px 0;
 }
 
 /* Section 3: JSON Data */
