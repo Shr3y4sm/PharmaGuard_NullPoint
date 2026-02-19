@@ -157,7 +157,7 @@ def prepare_llm_prompt(
     variants: list = None
 ) -> str:
     """
-    Prepare a structured prompt for LLM API to generate clinical recommendations.
+    Prepare a structured prompt for LLM API to generate patient-friendly clinical recommendations.
     
     Parameters:
     -----------
@@ -177,36 +177,49 @@ def prepare_llm_prompt(
     Returns:
     --------
     str
-        Formatted prompt for LLM
+        Formatted prompt for LLM with patient-friendly language
     """
     
-    prompt = f"""You are a clinical pharmacogenomics expert. Based on the following genetic and clinical data, provide:
-1. Clinical Recommendation (dosage adjustment, monitoring requirements, alternatives)
-2. Clinical Explanation (why this phenotype/genotype matters, mechanism, evidence)
+    phenotype_explanation = {
+        "PM": "Poor Metabolizer (your body breaks down this drug slowly)",
+        "IM": "Intermediate Metabolizer (your body breaks down this drug at a moderate pace)",
+        "NM": "Normal Metabolizer (your body breaks down this drug at a normal pace)",
+        "RM": "Rapid Metabolizer (your body breaks down this drug quickly)",
+        "URM": "Ultra-Rapid Metabolizer (your body breaks down this drug very quickly)",
+        "Unknown": "Unknown Metabolizer status"
+    }
+    
+    phenotype_desc = phenotype_explanation.get(phenotype, phenotype)
+    
+    prompt = f"""You are a healthcare expert explaining medication genetics to a patient in simple, easy-to-understand language.
 
-PATIENT GENETIC PROFILE:
-- Drug: {drug}
-- Primary Gene: {gene}
-- Phenotype: {phenotype}
-- Diplotype: {diplotype}
-- CPIC Evidence Level: {cpic_level or 'Unknown'}
-- Detected Variants: {variants or 'None'}
+PATIENT'S GENETIC PROFILE:
+- Medication: {drug}
+- Gene involved: {gene} (this gene controls how your body processes {drug})
+- Your metabolism type: {phenotype_desc}
+- Your genetic combination: {diplotype}
+- Science confidence: {cpic_level or 'Standard'} level evidence
+- Genetic markers found: {len(variants or [])} identified
 
-Please provide your response in JSON format with the following structure:
+IMPORTANT: Use simple language, avoid medical jargon, explain things a patient can understand, and be encouraging.
+
+Please provide information in this JSON format:
 {{
   "clinical_recommendation": {{
-    "dosage_adjustment": "specific recommendation",
-    "monitoring": "monitoring requirements",
-    "alternative_drugs": ["alternatives if applicable"],
-    "urgency": "routine|urgent|critical"
+    "dosage_adjustment": "In simple terms, whether you should take more, less, or standard amounts of {drug}",
+    "monitoring": "What you and your doctor should watch for or check regularly",
+    "alternative_drugs": ["Other medications that might work better for you based on your genetics"],
+    "urgency": "How important it is to discuss this with your doctor: routine|important|urgent"
   }},
   "llm_generated_explanation": {{
-    "summary": "brief summary",
-    "mechanism": "how phenotype affects drug metabolism",
-    "interaction_notes": ["note1", "note2"],
-    "evidence_basis": "supporting evidence"
+    "summary": "A simple 1-2 sentence explanation of what your genetics mean for {drug}",
+    "mechanism": "In plain English, how your genes affect how {drug} works in your body",
+    "interaction_notes": ["Simple practical tips you should know about taking {drug}", "Other important things to discuss with your doctor"],
+    "evidence_basis": "How confident doctors are in this information (based on scientific research)"
   }}
-}}"""
+}}
+
+Remember: Write for a patient who has no medical background. Use 'you' and 'your'. Be supportive and clear."""
     
     return prompt
 

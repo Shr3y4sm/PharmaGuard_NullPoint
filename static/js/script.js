@@ -1,3 +1,29 @@
+// Toast notification function
+function showToast(message, type = 'error') {
+    const toastContainer = document.createElement('div');
+    toastContainer.className = `toast ${type}`;
+    
+    // Add icon
+    let icon = '⚠️';
+    if (type === 'success') icon = '✓';
+    if (type === 'error') icon = '✕';
+    
+    toastContainer.innerHTML = `
+        <span class="toast-icon">${icon}</span>
+        <span class="toast-message">${message}</span>
+    `;
+    
+    document.body.appendChild(toastContainer);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        toastContainer.classList.add('removing');
+        setTimeout(() => {
+            toastContainer.remove();
+        }, 300);
+    }, 4000);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const analyzeBtn = document.querySelector('.btn-primary');
     const drugsInput = document.getElementById('enter-drugs');
@@ -98,27 +124,27 @@ document.addEventListener('DOMContentLoaded', function() {
             // Get drug input
             const drugs = drugsInput.value.trim();
             if (!drugs) {
-                alert('Please enter at least one drug name');
+                showToast('Please enter at least one drug name', 'error');
                 return;
             }
             
             // Get VCF file
             const vcfFile = vcfInput.files[0];
             if (!vcfFile) {
-                alert('Please select a VCF file');
+                showToast('Please select a VCF file', 'error');
                 return;
             }
             
             // Check file type
             if (!vcfFile.name.endsWith('.vcf')) {
-                alert('Please upload a .vcf file');
+                showToast('Please upload a proper .vcf file', 'error');
                 return;
             }
             
             // Check file size (5MB max)
             const maxSize = 5 * 1024 * 1024; // 5MB in bytes
             if (vcfFile.size > maxSize) {
-                alert('File size exceeds 5MB limit. Please upload a smaller file.');
+                showToast('File size exceeds 5MB. Please upload a proper file.', 'error');
                 return;
             }
             
@@ -209,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         error: errorMessage,
                         details: errorData.details || 'Unknown error'
                     }, null, 2);
-                    alert('Analysis failed: ' + errorMessage);
+                    showToast(errorMessage + ' - Please upload a proper file', 'error');
                 }
             } catch (error) {
                 const errorObj = {
@@ -217,7 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     message: error.message
                 };
                 jsonDataElement.textContent = JSON.stringify(errorObj, null, 2);
-                alert('Error during analysis: ' + error.message);
+                showToast('Error: ' + error.message, 'error');
                 console.error('Error:', error);
             } finally {
                 analyzeBtn.disabled = false;

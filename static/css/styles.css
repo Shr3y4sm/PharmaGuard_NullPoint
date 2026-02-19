@@ -415,6 +415,77 @@ select.form-control option {
 	white-space: pre-wrap;
 }
 
+/* Toast Notification Styles */
+.toast {
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	padding: 16px 24px;
+	border-radius: 8px;
+	background-color: #ff4757;
+	color: white;
+	font-size: 14px;
+	font-weight: 500;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 280px;
+	max-width: 400px;
+	animation: slideIn 0.3s ease-out;
+	z-index: 9999;
+}
+
+.toast.error {
+	background-color: #ff4757;
+}
+
+.toast.success {
+	background-color: #2ed573;
+}
+
+.toast.warning {
+	background-color: #ffa502;
+}
+
+.toast-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 20px;
+}
+
+.toast-message {
+	flex: 1;
+	line-height: 1.4;
+}
+
+@keyframes slideIn {
+	from {
+		transform: translateX(400px);
+		opacity: 0;
+	}
+	to {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
+@keyframes slideOut {
+	from {
+		transform: translateX(0);
+		opacity: 1;
+	}
+	to {
+		transform: translateX(400px);
+		opacity: 0;
+	}
+}
+
+.toast.removing {
+	animation: slideOut 0.3s ease-out forwards;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
 	.input-row {

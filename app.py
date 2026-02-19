@@ -303,23 +303,32 @@ def api_analysis():
                     if isinstance(gene_variants_list, list):
                         all_variants.extend(gene_variants_list)
                 
-                # Build Gemini prompt for drug not in CPIC
-                gemini_prompt = f"""
-                Analyze the pharmacogenomic profile for drug: {match_result.get('drug')}
-                
-                Patient VCF Data:
-                - Identified genes: {list(vcf_data.get('variants', {}).keys())}
-                - Total variants: {len(all_variants)}
-                - Variants: {all_variants}
-                
-                Note: This drug is not in the standard CPIC database. Please provide:
-                1. Known pharmacogenomic interactions for this drug
-                2. Relevant genes that might affect metabolism
-                3. Dosing recommendations based on genetic profile
-                4. Risk assessment
-                
-                Provide response in JSON format with clinical_recommendation and llm_generated_explanation.
-                """
+                # Build patient-friendly Gemini prompt for drug not in CPIC
+                gemini_prompt = f"""You are a healthcare expert explaining medication genetics to a patient in simple, easy-to-understand language.
+
+PATIENT'S GENETIC PROFILE FOR: {match_result.get('drug')}
+Patient's identified genes and genetic markers: {', '.join(list(vcf_data.get('variants', {}).keys())) or 'Multiple genes detected'}
+Total genetic variants found: {len(all_variants)}
+
+IMPORTANT: This medication is not in our standard database, but we can still analyze it using the patient's genetic profile.
+
+Please provide information in this JSON format, using simple language that a patient can understand:
+{{
+  "clinical_recommendation": {{
+    "dosage_adjustment": "In simple terms, whether the patient should take more, less, or standard amounts based on their genetics",
+    "monitoring": "What the patient and their doctor should watch for or check regularly",
+    "alternative_drugs": ["Other medications that might work better based on this patient's genetics"],
+    "urgency": "How important it is to discuss this with a doctor: routine|important|urgent"
+  }},
+  "llm_generated_explanation": {{
+    "summary": "A simple 1-2 sentence explanation of how the patient's genetics might affect {match_result.get('drug')}",
+    "mechanism": "In plain English, how the patient's genetic profile affects how their body processes {match_result.get('drug')}",
+    "interaction_notes": ["Important practical tips about taking {match_result.get('drug')}", "What to discuss with their doctor"],
+    "evidence_basis": "How confident we are in this information based on available research"
+  }}
+}}
+
+Remember: Write for a patient with no medical background. Be supportive, encouraging, and clear."""
                 
                 llm_result = None
                 if LLM_PROVIDER:
