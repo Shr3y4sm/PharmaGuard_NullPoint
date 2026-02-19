@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmGuard Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
+</head>
+<body>
+
+    <div class="container">
+        <header class="top-header">
+            PharmGuard
+        </header>
+
+        <section class="card card-padded">
+            <h2 class="section-title">ADD YOUR DATA</h2>
+            
+            <div class="input-row">
+                <div class="input-group">
+                    <label for="enter-drugs">Enter drugs</label>
+                    <input type="text" id="enter-drugs" class="form-control" value="Drug1, CODEINE" placeholder="E.g. Drug1, CODEINE">
+                </div>
+                
+                <div class="input-group">
+                    <label for="suggested-drugs">Suggested drugs</label>
+                    <select id="suggested-drugs" class="form-control">
+                        <option value="CODEINE" selected>CODEINE</option>
+                        <option value="ASPIRIN">ASPIRIN</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <span class="upload-label">Add your VCF data</span>
+                <input type="file" id="vcf-upload" accept=".vcf" style="display: none;">
+                <label for="vcf-upload" class="upload-area">
+                    <i class="ri-upload-2-line"></i>
+                    <div class="upload-text">
+                        Add .vcf file<br>
+                        (Max. size of 5MB)
+                    </div>
+                </label>
+            </div>
+
+            <button class="btn-primary">Analyse Drug Risk</button>
+        </section>
+
+        <section class="card card-padded results-section">
+            <div class="results-header-area">
+                <div>
+                    <h2 class="results-title">Drug Risk Analyzed</h2>
+                    <div class="text-green">Intake Severity: Low</div>
+                </div>
+                <div class="badge-container">
+                    <div class="badge-safe">Drug Intake: Safe</div>
+                    <div class="text-green">Model Confidence: 0.8%</div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active">Pharmacogenic Profile</button>
+                <button class="tab-btn">Clinincal Recommendation</button>
+                <button class="tab-btn">Clinical Explanation</button>
+            </div>
+
+            <div class="tab-content">
+                <p><strong>Analysis1:</strong> dtaat1 datta</p>
+                <p><strong>Analysis2:</strong> The rain arrived without warning, turning the quiet afternoon into a silver blur of sound and motion. People paused under doorways, watching the streets shimmer as if the city had briefly become a reflection of itself. For a moment, everything felt softer and unhurried.</p>
+            </div>
+        </section>
+
+        <section class="card json-section">
+            <div class="json-header">
+                <div class="json-title-group">
+                    JSON Data
+                    <i class="ri-file-download-line"></i>
+                </div>
+                <i class="ri-clipboard-line"></i>
+            </div>
+            <div class="json-content">
+                <pre>{}{}{}</pre>
+            </div>
+        </section>
+
+    </div>
+
+</body>
+</html>
