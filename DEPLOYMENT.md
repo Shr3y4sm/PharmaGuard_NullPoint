@@ -6,6 +6,7 @@ This guide provides comprehensive instructions for deploying PharmaGuard to vari
 
 - [Pre-Deployment Checklist](#pre-deployment-checklist)
 - [Local Deployment](#local-deployment)
+- [Render Deployment](#render-deployment)
 - [Heroku Deployment](#heroku-deployment)
 - [AWS Elastic Beanstalk](#aws-elastic-beanstalk)
 - [Azure App Service](#azure-app-service)
@@ -65,6 +66,167 @@ pip install gunicorn
 # Run with 4 worker processes
 gunicorn --bind 0.0.0.0:5000 --workers 4 app:app
 ```
+
+---
+
+## 🎯 Render Deployment
+
+### Why Render?
+- Free tier available for small projects
+- Native Python/Flask support
+- Automatic deployments from GitHub
+- Environment variable management
+- Real-time deployment logs
+- No credit card required for free tier
+
+### Prerequisites
+- Render account ([Sign up](https://dashboard.render.com/register))
+- GitHub account with this repository
+- Google Gemini API key
+
+### Step 1: Prepare Repository
+
+Ensure these files exist in your GitHub repository root:
+
+**requirements.txt** - Already present ✓
+
+**Procfile** (create if not exists):
+```
+web: gunicorn app:app
+```
+
+**render.yaml** (optional - for configuration):
+```yaml
+services:
+  - type: web
+    name: pharmaguard
+    env: python3
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+```
+
+### Step 2: Deploy to Render
+
+1. **Log in to Render Dashboard**
+   - Go to [https://dashboard.render.com](https://dashboard.render.com)
+   - Sign in with GitHub
+
+2. **Create New Web Service**
+   - Click "New +" → "Web Service"
+   - Select "Deploy existing repo from GitHub"
+   - Search for "PharmaGuard_NullPoint"
+   - Click "Connect"
+
+3. **Configure Service**
+   - **Name:** `pharmaguard` (or your preferred name)
+   - **Environment:** Python 3
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn app:app`
+   - **Instance Type:** Free (0.5 CPU, 512 MB RAM)
+   - **Auto-deploy:** Toggle "Yes" (optional)
+
+4. **Add Environment Variables**
+   - Click "Environment" tab
+   - Add new environment variable:
+     - **Key:** `GOOGLE_API_KEY`
+     - **Value:** Your Google Gemini API key
+   - Add additional variables if needed (see [Environment Variables](#environment-variables))
+
+5. **Deploy**
+   - Click "Create Web Service"
+   - Wait for build to complete (2-3 minutes)
+   - View URL in service details
+   - Access your app at: `https://pharmaguard.onrender.com`
+
+### Step 3: Verify Deployment
+
+```bash
+# Test the health of your deployment
+curl https://pharmaguard.onrender.com/
+
+# Test with sample VCF (if you have uploaded test data)
+curl -X POST -F "vcf_file=@sample.vcf" https://pharmaguard.onrender.com/analyze
+```
+
+### Step 4: Configure Auto-Deploy (Optional)
+
+To automatically deploy on every GitHub push:
+
+1. In Render Dashboard → Select your service
+2. Go to "Settings" tab
+3. Under "Auto-deploy" → Select "Deploy on push"
+4. Choose your GitHub branch (usually `main`)
+
+### Render Deployment Considerations
+
+**Free Tier Limitations:**
+- Spins down after 15 minutes of inactivity
+- First request after inactivity may take 30 seconds
+- 0.5 CPU, 512 MB RAM (suitable for testing/demo)
+
+**For Production (Paid Plans):**
+- Keep container running: 24/7 uptime
+- More CPU/RAM: Choose "Standard" or "Pro" plan
+- Better performance: Suitable for clinical use
+
+### Render vs Other Platforms
+
+| Feature | Render Free | Render Paid | Heroku | AWS |
+|---------|------------|------------|--------|-----|
+| Startup Cost | $0 | $7/month | Deprecated | Variable |
+| Auto-deploy | ✅ | ✅ | ✅ | Manual |
+| GitHub Integration | ✅ | ✅ | ✅ | Requires setup |
+| Environment Variables | ✅ | ✅ | ✅ | ✅ |
+| Sleep Mode | Yes (free) | No | N/A | No |
+| SSL Certificate | ✅ Free | ✅ Free | ✅ | ✅ |
+
+### Troubleshooting Render Deployment
+
+**Issue: Build fails with "ModuleNotFoundError"**
+```
+Solution: Ensure requirements.txt is in root directory
+verify: git ls-files | grep requirements.txt
+```
+
+**Issue: Application times out on first request**
+```
+Solution: This is normal on free tier - app spins down after inactivity
+Upgrade to paid plan or accept cold start delays
+```
+
+**Issue: GOOGLE_API_KEY not found**
+```
+Solution: 
+1. Go to Render Dashboard → Service → Environment
+2. Verify GOOGLE_API_KEY is set correctly
+3. Redeploy service: Click "Manual Deploy" → "Deploy latest commit"
+```
+
+**Issue: File upload fails (413 Payload Too Large)**
+```
+Solution: Increase upload limit in app.py
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB
+```
+
+### Monitor Render Deployment
+
+**View Logs:**
+- Dashboard → Service → Logs
+- Real-time display of application output
+- Useful for debugging issues
+
+**Check Service Health:**
+- Dashboard → Service → Health
+- Shows CPU usage, memory, request rates
+- Historical metrics available
+
+**Upgrade or Scale:**
+- Settings → Plan → Choose new tier
+- Free → Pro: Enables 24/7 uptime, 1 CPU, 2GB RAM
 
 ---
 
@@ -569,4 +731,4 @@ If you encounter issues during deployment:
 ---
 
 **Last Updated**: February 2026  
-**Version**: 1.0.0
+**Version**: 1.1.0 (Added Render support)

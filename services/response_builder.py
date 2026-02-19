@@ -125,8 +125,8 @@ def _determine_risk_assessment(phenotype: str, cpic_level: str = None, drug: str
         "IM": {"label": "Adjust Dosage", "severity": "moderate", "confidence": 0.85},
         "NM": {"label": "Safe", "severity": "none", "confidence": 0.90},
         "RM": {"label": "Adjust Dosage", "severity": "low", "confidence": 0.80},
-        "URM": {"label": "Adjust Dosage", "severity": "high", "confidence": 0.85},
-        "Unknown": {"label": "Review Required", "severity": "low", "confidence": 0.60}
+        "URM": {"label": "Ineffective", "severity": "high", "confidence": 0.85},
+        "Unknown": {"label": "Unknown", "severity": "low", "confidence": 0.60}
     }
     
     # Get default risk

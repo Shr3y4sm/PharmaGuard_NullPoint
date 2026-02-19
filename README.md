@@ -19,12 +19,19 @@
 ## 📋 Table of Contents
 
 - [Overview](#-overview)
+- [Quick Start](#-quick-start)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
 - [Tech Stack](#-tech-stack)
 - [Installation](#-installation)
 - [Usage](#-usage)
+- [Environment Variables](#-environment-variables)
 - [API Documentation](#-api-documentation)
+- [cURL Examples](#-curl-examples)
+- [Performance & Limits](#-performance--limits)
+- [Security Considerations](#-security-considerations)
+- [Troubleshooting & FAQ](#-troubleshooting--faq)
+- [Deployment](#-deployment)
 - [Project Structure](#-project-structure)
 - [Team](#-team)
 - [Contributing](#-contributing)
@@ -46,6 +53,39 @@ Adverse drug reactions cause ~100,000 deaths annually in the US. Genetic variati
 
 ### Solution
 PharmaGuard bridges the gap between genetic testing and clinical decision-making by automating pharmacogenomic analysis and providing actionable insights in seconds.
+
+---
+
+## ⚡ Quick Start
+
+Get PharmaGuard running in under 5 minutes:
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Shr3y4sm/PharmaGuard_NullPoint.git
+cd PharmaGuard_NullPoint
+
+# 2. Setup Python environment
+python -m venv venv
+source venv/bin/activate  # Windows: .\venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure API key
+cp .env.example .env
+# Edit .env and add your GOOGLE_API_KEY
+
+# 5. Run application
+python app.py
+```
+
+**Open browser:** http://localhost:5000
+
+Test with sample file:
+- Upload: `data/sample_poor_metabolizer.vcf`
+- Drug: `CODEINE`
+- Expected: HIGH RISK ⚠️ warning
 
 ---
 
@@ -237,7 +277,58 @@ The application will be available at `http://localhost:5000`
 
 ---
 
-## 📖 Usage
+## � Environment Variables
+
+Copy `.env.example` to `.env` and configure these variables:
+
+### Required
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GOOGLE_API_KEY` | Google Gemini API key | `AIzaSyD1234...` |
+
+### Optional
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `FLASK_ENV` | Environment mode (development/production) | `development` |
+| `HOST` | Server host address | `0.0.0.0` |
+| `PORT` | Server port number | `5000` |
+| `MAX_FILE_SIZE_MB` | Maximum upload size | `5` |
+| `SECRET_KEY` | Flask session secret (auto-generated) | Random |
+
+### Setup
+```bash
+# Copy template
+cp .env.example .env
+
+# Edit with your editor
+nano .env
+# or
+vim .env
+```
+
+### Example .env file
+```env
+# Google Gemini API Key (get from https://makersuite.google.com/app/apikey)
+GOOGLE_API_KEY=AIzaSyD1234567890abcdefghij
+
+# Flask Configuration
+FLASK_ENV=development
+FLASK_DEBUG=1
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=5000
+
+# File Upload Configuration
+MAX_FILE_SIZE_MB=5
+
+# Security (change for production)
+SECRET_KEY=dev_secret_key_change_in_production
+```
+
+---
+
+## �📖 Usage
 
 ### Web Interface Usage
 
@@ -461,7 +552,220 @@ POST /api/analysis
 ```
 
 ---
+## 📝 cURL Examples
 
+### Example 1: Analyze Single Drug
+```bash
+curl -X POST http://localhost:5000/api/analysis \
+  -F "vcf_file=@data/sample_poor_metabolizer.vcf" \
+  -F "drugs=CODEINE"
+```
+
+### Example 2: Analyze Multiple Drugs
+```bash
+curl -X POST http://localhost:5000/api/analysis \
+  -F "vcf_file=@data/sample_multi_drug.vcf" \
+  -F "drugs=CODEINE, WARFARIN, CLOPIDOGREL"
+```
+
+### Example 3: Save Response to File
+```bash
+curl -X POST http://localhost:5000/api/analysis \
+  -F "vcf_file=@data/sample_normal_metabolizer.vcf" \
+  -F "drugs=WARFARIN" \
+  -o response.json
+
+cat response.json | jq '.'  # Pretty print JSON
+```
+
+### Example 4: With Pretty-Printed Output
+```bash
+curl -X POST http://localhost:5000/api/analysis \
+  -F "vcf_file=@data/test_patient.vcf" \
+  -F "drugs=CODEINE" \
+  | jq '.'
+```
+
+### Example 5: Extract Specific Fields
+```bash
+curl -X POST http://localhost:5000/api/analysis \
+  -F "vcf_file=@data/sample_poor_metabolizer.vcf" \
+  -F "drugs=SIMVASTATIN" \
+  | jq '.responses[0].risk_assessment'
+```
+
+### Example 6: Check Server Health
+```bash
+curl -X GET http://localhost:5000/
+```
+
+---
+
+## ⚙️ Performance & Limits
+
+### File Constraints
+- **Maximum VCF File Size:** 5 MB
+- **Supported Format:** VCF v4.2 only
+- **Required INFO Fields:** GENE, STAR, RS
+- **Processing Time:** 3-5 seconds per drug analysis
+
+### Supported Pharmacogenes
+```
+CYP2D6   - Codeine, tramadol, metoprolol metabolism
+CYP2C19  - Clopidogrel, omeprazole metabolism
+CYP2C9   - Warfarin, NSAIDs metabolism
+SLCO1B1  - Simvastatin transport
+TPMT     - Immunosuppressant metabolism
+DPYD     - Fluorouracil metabolism
+```
+
+### Supported Drugs (5 drugs, CPIC Level A)
+```
+CODEINE         - Opioid analgesic
+WARFARIN        - Anticoagulant
+CLOPIDOGREL     - Antiplatelet agent
+SIMVASTATIN     - Statin (HMG-CoA reductase inhibitor)
+FLUOROURACIL    - Chemotherapy agent
+```
+
+### Phenotype Classifications
+```
+PM  - Poor Metabolizer        (increased drug levels)
+IM  - Intermediate Metabolizer (moderate metabolism)
+NM  - Normal Metabolizer       (standard metabolism)
+RM  - Rapid Metabolizer        (decreased drug levels)
+URM - Ultra-Rapid Metabolizer  (very low drug levels)
+```
+
+---
+
+## 🔒 Security Considerations
+
+### API Key Management
+- ✅ **Never commit** `.env` file to version control
+- ✅ **Use `.env.example`** as template for configuration
+- ✅ **Regenerate API keys** if compromised
+- ✅ **Rotate keys regularly** in production
+
+### File Upload Security
+- ✅ **VCF validation** before processing
+- ✅ **File size limits** (5MB max)
+- ✅ **Type checking** (.vcf extension only)
+- ✅ **Automatic cleanup** of uploaded files
+
+### Data Privacy
+- ⚠️ **No data persistence:** Files are deleted after analysis
+- ⚠️ **LLM requests:** Patient data sent to Google Gemini API
+- ⚠️ **HIPAA compliance:** Not certified; use with caution for real PHI
+- ⚠️ **Audit logging:** Enable in production environment
+
+### Production Security Checklist
+- [ ] Set `FLASK_ENV=production`
+- [ ] Use HTTPS/SSL certificates
+- [ ] Set strong SECRET_KEY
+- [ ] Configure CORS properly
+- [ ] Enable request logging
+- [ ] Set up rate limiting
+- [ ] Use environment-specific configs
+- [ ] Enable comprehensive error logging
+- [ ] Implement authentication for API endpoints
+- [ ] Use secure headers middleware
+
+---
+
+## 🆘 Troubleshooting & FAQ
+
+### Q: "ModuleNotFoundError: No module named 'flask'"
+**A:** Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+### Q: "GOOGLE_API_KEY not found"
+**A:** Create `.env` file from template:
+```bash
+cp .env.example .env
+# Then edit and add your API key
+```
+
+### Q: Application starts but port already in use
+**A:** Use different port or kill existing process:
+```bash
+# Windows
+netstat -ano | findstr :5000
+taskkill /PID <PID> /F
+
+# macOS/Linux
+lsof -i :5000
+kill -9 <PID>
+
+# Or use different port
+flask run --port 5001
+```
+
+### Q: "File too large" error (413)
+**A:** VCF file exceeds 5MB limit. Use smaller file or compress:
+```bash
+# Check file size
+ls -lh data/your_file.vcf
+
+# Use provided sample files instead
+```
+
+### Q: API returns "error": "VCF parsing failed"
+**A:** Check VCF format requirements:
+- Must be VCF v4.2 format
+- Must have INFO fields: GENE, STAR, RS
+- Check for invalid characters
+- Use sample files to verify format
+
+### Q: "Cannot import module 'cpic_engine'"
+**A:** Ensure you're in project root directory:
+```bash
+cd PharmaGuard_NullPoint
+python app.py
+```
+
+### Q: Analysis returns "risk_label": "Review Required"
+**A:** This is normal! Means insufficient variant data. Possible causes:
+- Missing genes in VCF file
+- Non-standard diplotype combinations
+- Confidence score below threshold
+
+### Q: CPIC data loading errors
+**A:** Verify file exists:
+```bash
+ls -la data/cpic_gene-drug_pairs.xlsx
+```
+
+### Q: Browser shows "Cannot GET /"
+**A:** Application not running. Start server:
+```bash
+python app.py
+```
+
+### Q: Drag-and-drop not working
+**A:** Try these steps:
+1. Refresh browser (Ctrl+Shift+R hard refresh)
+2. Check browser console for JavaScript errors
+3. Try uploading file via file selector button
+4. Use supported browser (Chrome, Firefox, Safari, Edge)
+
+### Q: LLM explanation is empty or generic
+**A:** These issues may cause this:
+- API rate limit exceeded
+- Network connectivity issues
+- Invalid API key
+- Invalid drug-gene combination
+
+### Q: How to test without internet?
+**A:** LLM features won't work offline, but VCF parsing and risk assessment will:
+```bash
+# Disable LLM service
+# Comment out LLM_PROVIDER in app.py
+```
+
+---
 ## � Deployment
 
 PharmaGuard can be deployed to multiple cloud platforms. See **[DEPLOYMENT.md](DEPLOYMENT.md)** for comprehensive deployment instructions.

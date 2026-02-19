@@ -284,6 +284,32 @@ select.form-control option {
 	font-weight: 600;
 }
 
+.badge-ineffective {
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #FF6B6B;
+	color: #fff;
+	padding: 20px;
+	border-radius: 4px;
+	font-size: 20px;
+	font-weight: 600;
+}
+
+.badge-unknown {
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #6C757D;
+	color: #fff;
+	padding: 20px;
+	border-radius: 4px;
+	font-size: 20px;
+	font-weight: 600;
+}
+
 .confidence {
 	color: #21b53c;
 }
