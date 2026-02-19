@@ -14,7 +14,8 @@ def build_response_json(
     cpic_level: str = None,
     patient_id: str = None,
     clinical_recommendation: dict = None,
-    llm_explanation: dict = None
+    llm_explanation: dict = None,
+    guideline_url: str = None
 ) -> dict:
     """
     Build the structured JSON response matching the required schema.
@@ -43,6 +44,8 @@ def build_response_json(
         Clinical recommendation from LLM
     llm_explanation : dict
         LLM-generated explanation
+    guideline_url : str
+        Link to clinical guideline for this drug
         
     Returns:
     --------
@@ -96,6 +99,10 @@ def build_response_json(
         },
         "quality_metrics": quality_metrics
     }
+    
+    # Add guideline_url if available
+    if guideline_url:
+        response["guideline_url"] = guideline_url
     
     return response
 

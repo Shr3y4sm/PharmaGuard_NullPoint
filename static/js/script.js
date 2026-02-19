@@ -344,6 +344,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 profileHtml += '</ul>';
             }
+            
+            // Add guideline citation if available
+            if (response.guideline_url) {
+                profileHtml += '<hr style="margin: 15px 0;">';
+                profileHtml += '<p><strong>Clinical Guideline Citation:</strong></p>';
+                profileHtml += `<p><a href="${response.guideline_url}" target="_blank" rel="noopener noreferrer" style="color: #0066cc; text-decoration: underline;">View CPIC Clinical Guideline</a></p>`;
+            }
+            
             profileHtml += '</div>';
             pharmaContent.innerHTML = profileHtml;
         }
@@ -355,9 +363,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let recHtml = '<div style="padding: 10px;">';
             recHtml += `<p><strong>Dosage Adjustment:</strong></p><p>${clinicalRec.dosage_adjustment || 'Pending analysis'}</p>`;
             recHtml += `<p><strong>Monitoring:</strong></p><p>${clinicalRec.monitoring || 'Pending analysis'}</p>`;
-            if (clinicalRec.alternatives && Array.isArray(clinicalRec.alternatives)) {
+            if (clinicalRec.alternative_drugs && Array.isArray(clinicalRec.alternative_drugs)) {
                 recHtml += '<p><strong>Alternative Drugs:</strong></p><ul>';
-                clinicalRec.alternatives.forEach(alt => {
+                clinicalRec.alternative_drugs.forEach(alt => {
                     recHtml += `<li>${alt}</li>`;
                 });
                 recHtml += '</ul>';
@@ -373,7 +381,16 @@ document.addEventListener('DOMContentLoaded', function() {
             let explainHtml = '<div style="padding: 10px;">';
             explainHtml += `<p><strong>Summary:</strong></p><p>${llmExplain.summary || 'Awaiting LLM analysis'}</p>`;
             explainHtml += `<p><strong>Mechanism:</strong></p><p>${llmExplain.mechanism || 'Awaiting LLM analysis'}</p>`;
-            explainHtml += `<p><strong>Evidence:</strong></p><p>${llmExplain.evidence || 'Awaiting LLM analysis'}</p>`;
+            explainHtml += `<p><strong>Evidence Basis:</strong></p><p>${llmExplain.evidence_basis || 'Awaiting LLM analysis'}</p>`;
+            
+            if (llmExplain.interaction_notes && Array.isArray(llmExplain.interaction_notes)) {
+                explainHtml += '<p><strong>Important Notes:</strong></p><ul>';
+                llmExplain.interaction_notes.forEach(note => {
+                    explainHtml += `<li>${note}</li>`;
+                });
+                explainHtml += '</ul>';
+            }
+            
             explainHtml += '</div>';
             explainContent.innerHTML = explainHtml;
         }

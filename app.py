@@ -288,7 +288,8 @@ def api_analysis():
                     vcf_parsing_success=vcf_data.get('vcf_parsing_success'),
                     cpic_level=match_result.get('cpic_level'),
                     clinical_recommendation=llm_result.get('clinical_recommendation') if llm_result else None,
-                    llm_explanation=llm_result.get('llm_generated_explanation') if llm_result else None
+                    llm_explanation=llm_result.get('llm_generated_explanation') if llm_result else None,
+                    guideline_url=match_result.get('guideline_url')
                 )
                 json_responses.append(json_response)
                 print(f"Added response for {drug}")
@@ -351,7 +352,8 @@ Remember: Write for a patient with no medical background. Be supportive, encoura
                     vcf_parsing_success=vcf_data.get('vcf_parsing_success'),
                     cpic_level="Custom",
                     clinical_recommendation=llm_result.get('clinical_recommendation') if llm_result else None,
-                    llm_explanation=llm_result.get('llm_generated_explanation') if llm_result else None
+                    llm_explanation=llm_result.get('llm_generated_explanation') if llm_result else None,
+                    guideline_url=match_result.get('guideline_url')
                 )
                 json_responses.append(json_response)
                 print(f"Added Gemini fallback response for {drug}")

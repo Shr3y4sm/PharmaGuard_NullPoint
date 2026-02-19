@@ -14,8 +14,14 @@ def load_cpic_data(filepath: str) -> dict:
     Returns:
     --------
     dict
-        Dictionary with drug names (uppercase) as keys and gene/cpic_level as values
-        Example: {"CODEINE": {"gene": "CYP2D6", "cpic_level": "A"}}
+        Dictionary with drug names (uppercase) as keys and gene/cpic_level/guideline_url as values
+        Example: {
+            "CODEINE": {
+                "gene": "CYP2D6", 
+                "cpic_level": "A",
+                "guideline_url": "https://cpicpgx.org/guidelines/..."
+            }
+        }
         
     Raises:
     -------
@@ -70,6 +76,16 @@ def load_cpic_data(filepath: str) -> dict:
             # Add CPIC Level if it exists and is not null
             if "CPIC Level" in df.columns and pd.notna(row["CPIC Level"]):
                 entry["cpic_level"] = str(row["CPIC Level"]).strip()
+            
+            # Add Guideline URL if it exists and is not null
+            # Try different possible column names for the guideline/URL
+            guideline_columns = ["Guideline", "Guideline URL", "Guideline_URL", "URL", "Link"]
+            for col in guideline_columns:
+                if col in df.columns and pd.notna(row[col]):
+                    guideline_value = str(row[col]).strip()
+                    if guideline_value and guideline_value.lower() not in ["nan", "none", ""]:
+                        entry["guideline_url"] = guideline_value
+                        break
             
             cpic_data[drug_key] = entry
     
