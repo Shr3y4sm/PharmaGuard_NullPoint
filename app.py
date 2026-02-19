@@ -363,14 +363,8 @@ Remember: Write for a patient with no medical background. Be supportive, encoura
         print(f"\nTotal responses: {len(json_responses)}")
         
         return jsonify({
-            "success": True,
-            "responses": json_responses,
-            "total_results": len(json_responses),
-            "debug": {
-                "vcf_genes_found": list(vcf_data.get('variants', {}).keys()),
-                "cpic_drugs_loaded": list(CPIC_ENGINE.keys()),
-                "drugs_requested": drug_list
-            }
+            "total_analyses": len(json_responses),
+            "analyses": json_responses
         }), 200
     
     except Exception as e:

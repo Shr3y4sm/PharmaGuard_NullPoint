@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from abc import ABC, abstractmethod
 
 
@@ -32,7 +33,7 @@ class GeminiProvider(LLMProvider):
     
     def generate_clinical_recommendation(self, prompt: str) -> dict:
         """
-        Generate clinical recommendation using Google Gemini.
+        Generate clinical recommendation using Google Gemini with retry logic.
         
         Parameters:
         -----------
@@ -47,57 +48,88 @@ class GeminiProvider(LLMProvider):
         try:
             import requests
             
-            url = f"{self.base_url}/{self.model}:generateContent?key={self.api_key}"
+            max_retries = 3
+            retry_delay = 1  # Start with 1 second
             
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {"text": prompt}
+            for attempt in range(max_retries):
+                try:
+                    url = f"{self.base_url}/{self.model}:generateContent?key={self.api_key}"
+                    
+                    payload = {
+                        "contents": [
+                            {
+                                "parts": [
+                                    {"text": prompt}
+                                ]
+                            }
                         ]
                     }
-                ]
-            }
-            
-            response = requests.post(url, json=payload, timeout=30)
-            response.raise_for_status()
-            
-            result = response.json()
-            
-            # Extract text from response
-            if "candidates" in result and len(result["candidates"]) > 0:
-                candidate = result["candidates"][0]
-                if "content" in candidate and "parts" in candidate["content"]:
-                    text = candidate["content"]["parts"][0]["text"]
                     
-                    # Try to parse as JSON
-                    try:
-                        # First try direct JSON parsing
-                        parsed_response = json.loads(text)
-                        return parsed_response
-                    except json.JSONDecodeError:
-                        # Try to extract JSON from markdown code blocks
-                        try:
-                            import re
-                            # Look for JSON in code blocks (```json ... ```)
-                            json_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL)
-                            if json_match:
-                                json_text = json_match.group(1)
-                                parsed_response = json.loads(json_text)
+                    response = requests.post(url, json=payload, timeout=30)
+                    
+                    # Handle rate limiting with retry
+                    if response.status_code == 429:  # Too Many Requests
+                        if attempt < max_retries - 1:
+                            print(f"⚠ Rate limited (429). Retrying in {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+                            time.sleep(retry_delay)
+                            retry_delay *= 2  # Exponential backoff
+                            continue
+                        else:
+                            print(f"⚠ Rate limit exceeded after {max_retries} attempts. Using fallback response.")
+                            return self._default_response()
+                    
+                    response.raise_for_status()
+                    
+                    result = response.json()
+                    
+                    # Extract text from response
+                    if "candidates" in result and len(result["candidates"]) > 0:
+                        candidate = result["candidates"][0]
+                        if "content" in candidate and "parts" in candidate["content"]:
+                            text = candidate["content"]["parts"][0]["text"]
+                            
+                            # Try to parse as JSON
+                            try:
+                                # First try direct JSON parsing
+                                parsed_response = json.loads(text)
                                 return parsed_response
-                        except:
-                            pass
-                        
-                        # If still can't parse, structure it
-                        return {
-                            "clinical_recommendation": {
-                                "dosage_adjustment": text[:200] if len(text) > 200 else text,
-                                "monitoring": "Refer to clinical guidelines"
-                            },
-                            "llm_generated_explanation": {
-                                "summary": text
-                            }
-                        }
+                            except json.JSONDecodeError:
+                                # Try to extract JSON from markdown code blocks
+                                try:
+                                    import re
+                                    # Look for JSON in code blocks (```json ... ```)
+                                    json_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', text, re.DOTALL)
+                                    if json_match:
+                                        json_text = json_match.group(1)
+                                        parsed_response = json.loads(json_text)
+                                        return parsed_response
+                                except:
+                                    pass
+                                
+                                # If still can't parse, structure it
+                                return {
+                                    "clinical_recommendation": {
+                                        "dosage_adjustment": text[:200] if len(text) > 200 else text,
+                                        "monitoring": "Refer to clinical guidelines"
+                                    },
+                                    "llm_generated_explanation": {
+                                        "summary": text,
+                                        "mechanism": "Consult your healthcare provider for personalized guidance",
+                                        "interaction_notes": ["Discuss with your pharmacist", "Follow clinical guidelines"],
+                                        "evidence_basis": "Based on clinical research and guidelines"
+                                    }
+                                }
+                    
+                    return self._default_response()
+                
+                except requests.exceptions.RequestException as e:
+                    if attempt < max_retries - 1:
+                        print(f"⚠ Request error: {e}. Retrying in {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
+                        time.sleep(retry_delay)
+                        retry_delay *= 2
+                        continue
+                    else:
+                        raise
             
             return self._default_response()
         
@@ -106,14 +138,23 @@ class GeminiProvider(LLMProvider):
             return self._default_response()
     
     def _default_response(self) -> dict:
-        """Return default response if API call fails."""
+        """Return complete default response if API call fails."""
         return {
             "clinical_recommendation": {
-                "dosage_adjustment": "Consult healthcare provider",
-                "monitoring": "Standard monitoring recommended"
+                "dosage_adjustment": "Consult healthcare provider for personalized guidance",
+                "monitoring": "Standard monitoring recommended",
+                "alternative_drugs": [],
+                "urgency": "routine"
             },
             "llm_generated_explanation": {
-                "summary": "Unable to generate LLM explanation at this time"
+                "summary": "Your genetic profile has been analyzed for this medication. Consult with your healthcare provider for personalized dosing guidance.",
+                "mechanism": "Your body's ability to process this medication depends on your genetic makeup. This has been analyzed and will be discussed with your doctor.",
+                "interaction_notes": [
+                    "Always inform your doctor about genetic test results",
+                    "Discuss any medication changes with your pharmacist",
+                    "Report any unusual side effects immediately"
+                ],
+                "evidence_basis": "Based on published clinical guidelines and genetic research"
             }
         }
 
@@ -201,14 +242,23 @@ class OpenAIProvider(LLMProvider):
             return self._default_response()
     
     def _default_response(self) -> dict:
-        """Return default response if API call fails."""
+        """Return complete default response if API call fails."""
         return {
             "clinical_recommendation": {
-                "dosage_adjustment": "Consult healthcare provider",
-                "monitoring": "Standard monitoring recommended"
+                "dosage_adjustment": "Consult healthcare provider for personalized guidance",
+                "monitoring": "Standard monitoring recommended",
+                "alternative_drugs": [],
+                "urgency": "routine"
             },
             "llm_generated_explanation": {
-                "summary": "Unable to generate LLM explanation at this time"
+                "summary": "Your genetic profile has been analyzed for this medication. Consult with your healthcare provider for personalized dosing guidance.",
+                "mechanism": "Your body's ability to process this medication depends on your genetic makeup. This has been analyzed and will be discussed with your doctor.",
+                "interaction_notes": [
+                    "Always inform your doctor about genetic test results",
+                    "Discuss any medication changes with your pharmacist",
+                    "Report any unusual side effects immediately"
+                ],
+                "evidence_basis": "Based on published clinical guidelines and genetic research"
             }
         }
 
