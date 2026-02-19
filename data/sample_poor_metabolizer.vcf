@@ -1,0 +1,17 @@
+##fileformat=VCFv4.2
+##fileDate=20260219
+##source=PharmaGuard_Sample
+##reference=GRCh38
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
+##INFO=<ID=AF,Number=A,Type=Float,Description="Allele Frequency">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
+##contig=<ID=chr22>
+##contig=<ID=chr10>
+##SAMPLE=<ID=POOR_002,Description="Patient with poor metabolizer phenotype - HIGH RISK for multiple drugs">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	POOR_002
+chr22	42126611	rs4244285	G	A	100	PASS	DP=50;AF=1.0	GT:DP	1/1	50
+chr22	42128945	rs4986893	G	A	100	PASS	DP=52;AF=1.0	GT:DP	1/1	52
+chr10	94781859	rs1799853	C	T	100	PASS	DP=48;AF=1.0	GT:DP	1/1	48
+chr10	94842866	rs1057910	A	C	100	PASS	DP=45;AF=1.0	GT:DP	1/1	45
+chr22	42127941	rs12248560	C	T	100	PASS	DP=50;AF=1.0	GT:DP	1/1	50

@@ -36,5 +36,7 @@ instance/
 .env
 .env.local
 
-# Data files (keep VCF upload cache if needed)
-data/
+# Data files - keep essential files, ignore user uploads
+data/uploads/
+data/*.tmp
+data/*_cache/
