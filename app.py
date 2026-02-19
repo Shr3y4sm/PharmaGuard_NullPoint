@@ -151,7 +151,9 @@ def analyze():
                     phenotype=phenotype_result.get('phenotype'),
                     diplotype=phenotype_result.get('diplotype'),
                     cpic_level=match_result.get('cpic_level'),
-                    variants=gene_variants
+                    variants=gene_variants,
+                    guideline_url=match_result.get('guideline_url'),
+                    risk_assessment=json_response.get('risk_assessment') if json_response else None
                 )
                 print(f"LLM Prompt prepared for {drug}")
                 
@@ -272,7 +274,9 @@ def api_analysis():
                             phenotype=phenotype_result.get('phenotype'),
                             diplotype=phenotype_result.get('diplotype'),
                             cpic_level=match_result.get('cpic_level'),
-                            variants=gene_variants
+                            variants=gene_variants,
+                            guideline_url=match_result.get('guideline_url'),
+                            risk_assessment=None
                         )
                         llm_result = LLM_PROVIDER.generate_clinical_recommendation(llm_prompt)
                         print(f"LLM response: {llm_result}")

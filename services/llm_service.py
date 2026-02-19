@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import random
 from abc import ABC, abstractmethod
 
 
@@ -70,8 +71,15 @@ class GeminiProvider(LLMProvider):
                     # Handle rate limiting with retry
                     if response.status_code == 429:  # Too Many Requests
                         if attempt < max_retries - 1:
-                            print(f"⚠ Rate limited (429). Retrying in {retry_delay}s... (attempt {attempt + 1}/{max_retries})")
-                            time.sleep(retry_delay)
+                            retry_after = response.headers.get("Retry-After")
+                            if retry_after:
+                                try:
+                                    retry_delay = max(retry_delay, int(retry_after))
+                                except ValueError:
+                                    pass
+                            jitter = random.uniform(0.2, 0.8)
+                            print(f"⚠ Rate limited (429). Retrying in {retry_delay + jitter:.1f}s... (attempt {attempt + 1}/{max_retries})")
+                            time.sleep(retry_delay + jitter)
                             retry_delay *= 2  # Exponential backoff
                             continue
                         else:

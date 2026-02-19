@@ -104,6 +104,8 @@ def parse_vcf(file) -> dict:
                     continue
                 
                 info_field = fields[7]
+                format_field = fields[8] if len(fields) > 8 else ""
+                sample_field = fields[9] if len(fields) > 9 else ""
                 
                 # Parse INFO field (KEY=VALUE;KEY=VALUE;...)
                 info_dict = {}
@@ -118,6 +120,15 @@ def parse_vcf(file) -> dict:
                 gene = info_dict.get("GENE", "").upper()
                 rsid = info_dict.get("RS", "")
                 star = info_dict.get("STAR", "")
+
+                # Skip reference-only genotypes when possible
+                if format_field and sample_field:
+                    format_keys = format_field.split(':')
+                    sample_values = sample_field.split(':')
+                    format_map = dict(zip(format_keys, sample_values))
+                    genotype = format_map.get("GT")
+                    if genotype and genotype in {"0/0", "0|0"}:
+                        continue
                 
                 # Only process if gene is supported
                 if gene not in SUPPORTED_GENES:

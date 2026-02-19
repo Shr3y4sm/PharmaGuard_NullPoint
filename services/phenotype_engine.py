@@ -106,38 +106,70 @@ def determine_phenotype(gene: str, variants: list) -> dict:
             result["phenotype"] = "Unknown"
             return result
         
-        # Build diplotype
-        if len(star_alleles) >= 2:
-            # Multiple alleles: sort and pair them
-            sorted_alleles = sorted(star_alleles[:2])
-            diplotype = f"{sorted_alleles[0]}/{sorted_alleles[1]}"
+        # Build diplotype candidates
+        gene_phenotype_map = PHENOTYPE_MAP.get(gene, {})
+
+        unique_alleles = []
+        for allele in star_alleles:
+            if allele not in unique_alleles:
+                unique_alleles.append(allele)
+
+        def phenotype_rank(label: str) -> int:
+            ranking = {
+                "PM": 5,
+                "IM": 4,
+                "NM": 3,
+                "RM": 2,
+                "URM": 1
+            }
+            return ranking.get(label, 0)
+
+        def pick_best_diplotype(alleles: list) -> tuple:
+            candidates = []
+            if len(alleles) == 1:
+                candidates.append((alleles[0], alleles[0]))
+            else:
+                for i in range(len(alleles)):
+                    for j in range(i + 1, len(alleles)):
+                        candidates.append((alleles[i], alleles[j]))
+
+            best = None
+            best_label = None
+            for a1, a2 in candidates:
+                direct = f"{a1}/{a2}"
+                reverse = f"{a2}/{a1}"
+                if direct in gene_phenotype_map:
+                    label = gene_phenotype_map[direct]
+                    if not best or phenotype_rank(label) > phenotype_rank(best_label):
+                        best = direct
+                        best_label = label
+                if reverse in gene_phenotype_map:
+                    label = gene_phenotype_map[reverse]
+                    if not best or phenotype_rank(label) > phenotype_rank(best_label):
+                        best = reverse
+                        best_label = label
+
+            return best, best_label
+
+        diplotype, phenotype_label = pick_best_diplotype(unique_alleles)
+
+        if not diplotype:
+            if len(unique_alleles) >= 2:
+                diplotype = f"{unique_alleles[0]}/{unique_alleles[1]}"
+                result["confidence"] = "medium"
+            else:
+                allele = unique_alleles[0]
+                diplotype = f"{allele}/{allele}"
+                result["confidence"] = "medium"
+
+        result["diplotype"] = diplotype
+
+        if phenotype_label:
+            result["phenotype"] = phenotype_label
             result["confidence"] = "high"
-        elif len(star_alleles) == 1:
-            # Single allele: assume homozygous
-            allele = star_alleles[0]
-            diplotype = f"{allele}/{allele}"
-            result["confidence"] = "medium"
         else:
             result["phenotype"] = "Unknown"
-            return result
-        
-        result["diplotype"] = diplotype
-        
-        # Map diplotype to phenotype
-        gene_phenotype_map = PHENOTYPE_MAP.get(gene, {})
-        
-        if diplotype in gene_phenotype_map:
-            result["phenotype"] = gene_phenotype_map[diplotype]
-        else:
-            # Try reverse order if not found (e.g., *10/*4 vs *4/*10)
-            reversed_diplotype = f"{sorted_alleles[1]}/{sorted_alleles[0]}" if len(sorted_alleles) >= 2 else None
-            
-            if reversed_diplotype and reversed_diplotype in gene_phenotype_map:
-                result["phenotype"] = gene_phenotype_map[reversed_diplotype]
-            else:
-                # Unknown diplotype - mark with low confidence
-                result["phenotype"] = "Unknown"
-                result["confidence"] = "low"
+            result["confidence"] = "low"
         
         return result
     

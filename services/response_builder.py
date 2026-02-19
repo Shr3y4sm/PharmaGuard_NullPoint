@@ -161,7 +161,9 @@ def prepare_llm_prompt(
     phenotype: str,
     diplotype: str,
     cpic_level: str = None,
-    variants: list = None
+    variants: list = None,
+    guideline_url: str = None,
+    risk_assessment: dict = None
 ) -> str:
     """
     Prepare a structured prompt for LLM API to generate patient-friendly clinical recommendations.
@@ -198,7 +200,14 @@ def prepare_llm_prompt(
     
     phenotype_desc = phenotype_explanation.get(phenotype, phenotype)
     
+    risk_label = None
+    risk_severity = None
+    if isinstance(risk_assessment, dict):
+        risk_label = risk_assessment.get("risk_label")
+        risk_severity = risk_assessment.get("severity")
+
     prompt = f"""You are a healthcare expert explaining medication genetics to a patient in simple, easy-to-understand language.
+Your response MUST align with CPIC guidelines and be clinically actionable.
 
 PATIENT'S GENETIC PROFILE:
 - Medication: {drug}
@@ -207,8 +216,15 @@ PATIENT'S GENETIC PROFILE:
 - Your genetic combination: {diplotype}
 - Science confidence: {cpic_level or 'Standard'} level evidence
 - Genetic markers found: {len(variants or [])} identified
+ - Risk assessment: {risk_label or 'Unknown'} (severity: {risk_severity or 'unknown'})
+ - CPIC guideline link (use if available): {guideline_url or 'Not available'}
 
-IMPORTANT: Use simple language, avoid medical jargon, explain things a patient can understand, and be encouraging.
+IMPORTANT:
+- Follow CPIC guidance for this drug-gene pair. Do not contradict CPIC recommendations.
+- Provide personalized pharmacogenomic risks based on phenotype and diplotype.
+- Provide clinically actionable recommendations (dose change, monitoring, alternatives, urgency).
+- Use simple language, avoid medical jargon, and be encouraging.
+- Output MUST be valid JSON only (no markdown, no extra text).
 
 Please provide information in this JSON format:
 {{
@@ -221,8 +237,8 @@ Please provide information in this JSON format:
   "llm_generated_explanation": {{
     "summary": "A simple 1-2 sentence explanation of what your genetics mean for {drug}",
     "mechanism": "In plain English, how your genes affect how {drug} works in your body",
-    "interaction_notes": ["Simple practical tips you should know about taking {drug}", "Other important things to discuss with your doctor"],
-    "evidence_basis": "How confident doctors are in this information (based on scientific research)"
+        "interaction_notes": ["Simple practical tips you should know about taking {drug}", "Other important things to discuss with your doctor"],
+        "evidence_basis": "How confident doctors are in this information, and cite CPIC level and guideline link if available"
   }}
 }}
 
