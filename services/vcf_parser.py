@@ -17,7 +17,8 @@ def parse_vcf(file) -> dict:
                 "CYP2D6": [{"rsid": "rs...", "star": "*4"}, ...],
                 "CYP2C19": [...],
                 ...
-            }
+            },
+            "error": "..." (if parsing failed)
         }
     """
     
@@ -38,12 +39,35 @@ def parse_vcf(file) -> dict:
     }
     
     try:
+        # Read entire file content to check if empty
+        content = file.read()
+        if not content:
+            result["error"] = "VCF file is empty"
+            return result
+        
+        # Reset file pointer for re-reading
+        if hasattr(file, 'seek'):
+            file.seek(0)
+        else:
+            # If can't seek, recreate from content
+            from io import BytesIO
+            file = BytesIO(content)
+        
         # Initialize gene dictionaries
         for gene in SUPPORTED_GENES:
             result["variants"][gene] = []
         
+        # Track file validation
+        has_vcf_header = False
+        has_column_header = False
+        has_data_lines = False
+        total_variants_found = 0
+        line_count = 0
+        
         # Read file line by line
         for line in file:
+            line_count += 1
+            
             # Handle both bytes and string
             if isinstance(line, bytes):
                 line = line.decode('utf-8').strip()
@@ -54,9 +78,22 @@ def parse_vcf(file) -> dict:
             if not line:
                 continue
             
-            # Skip header lines
+            # Check for VCF header
+            if line.startswith("##fileformat=VCF"):
+                has_vcf_header = True
+                continue
+            
+            # Check for column header line
+            if line.startswith("#CHROM"):
+                has_column_header = True
+                continue
+            
+            # Skip other metadata lines
             if line.startswith("#"):
                 continue
+            
+            # Data line found
+            has_data_lines = True
             
             try:
                 # Parse VCF line
@@ -98,10 +135,32 @@ def parse_vcf(file) -> dict:
                 # Only add if we have at least rsid or star
                 if variant:
                     result["variants"][gene].append(variant)
+                    total_variants_found += 1
             
             except Exception as e:
                 # Skip malformed lines
                 continue
+        
+        # Validation checks
+        if line_count == 0:
+            result["error"] = "VCF file is empty - no lines found"
+            return result
+        
+        if not has_vcf_header:
+            result["error"] = "Invalid VCF file - missing '##fileformat=VCFv4.2' header"
+            return result
+        
+        if not has_column_header:
+            result["error"] = "Invalid VCF file - missing '#CHROM' column header line"
+            return result
+        
+        if not has_data_lines:
+            result["error"] = "VCF file has no data lines - only headers present"
+            return result
+        
+        if total_variants_found == 0:
+            result["error"] = "No pharmacogenomic variants found in VCF file for supported genes (CYP2D6, CYP2C19, CYP2C9, SLCO1B1, TPMT, DPYD)"
+            return result
         
         result["vcf_parsing_success"] = True
         

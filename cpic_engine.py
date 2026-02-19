@@ -6,10 +6,11 @@ SUPPORTED_DRUGS = [
     "WARFARIN",
     "CLOPIDOGREL",
     "SIMVASTATIN",
+    "AZATHIOPRINE",
     "FLUOROURACIL"
 ]
 
-# Note: AZATHIOPRINE removed - not available in current CPIC dataset
+# Note: If a drug is not found in CPIC data, Gemini LLM will be used for analysis
 
 
 def initialize_cpic_engine(filepath: str) -> dict:

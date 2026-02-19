@@ -1,6 +1,7 @@
-def match_drug_with_vcf(drug: str, vcf_data: dict, cpic_engine: dict) -> dict:
+def match_drug_with_vcf(drug: str, vcf_data: dict, cpic_engine: dict, allow_gemini_fallback: bool = True) -> dict:
     """
     Match a user-input drug with CPIC gene and check if gene variants exist in VCF data.
+    If drug not in CPIC, mark for Gemini fallback analysis.
     
     Parameters:
     -----------
@@ -12,6 +13,8 @@ def match_drug_with_vcf(drug: str, vcf_data: dict, cpic_engine: dict) -> dict:
     cpic_engine : dict
         CPIC data from cpic_engine.initialize_cpic_engine()
         Expected structure: {"DRUG": {"gene": "GENE", "cpic_level": "LEVEL", ...}}
+    allow_gemini_fallback : bool
+        If True, mark drug for Gemini fallback when not in CPIC (instead of error)
         
     Returns:
     --------
@@ -25,6 +28,7 @@ def match_drug_with_vcf(drug: str, vcf_data: dict, cpic_engine: dict) -> dict:
             "guideline_url": "...",
             "gene_found_in_vcf": True/False,
             "variant_count": 0,
+            "gemini_fallback": False,  # True if drug not in CPIC but allowed
             "error": "..." (if valid is False)
         }
     """
@@ -37,7 +41,8 @@ def match_drug_with_vcf(drug: str, vcf_data: dict, cpic_engine: dict) -> dict:
         "cpic_level": None,
         "guideline_url": None,
         "gene_found_in_vcf": False,
-        "variant_count": 0
+        "variant_count": 0,
+        "gemini_fallback": False
     }
     
     try:
@@ -47,8 +52,15 @@ def match_drug_with_vcf(drug: str, vcf_data: dict, cpic_engine: dict) -> dict:
         
         # Check if drug exists in CPIC engine
         if drug_normalized not in cpic_engine:
-            result["error"] = "Drug not found in CPIC dataset"
-            return result
+            # Allow fallback to Gemini for unsupported drugs
+            if allow_gemini_fallback:
+                result["valid"] = True
+                result["gemini_fallback"] = True
+                result["error"] = f"Drug not in CPIC database - will use Gemini for analysis"
+                return result
+            else:
+                result["error"] = "Drug not found in CPIC dataset"
+                return result
         
         # Get drug data from CPIC engine
         drug_data = cpic_engine[drug_normalized]

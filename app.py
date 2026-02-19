@@ -292,8 +292,64 @@ def api_analysis():
                 )
                 json_responses.append(json_response)
                 print(f"Added response for {drug}")
+            
+            elif match_result.get('gemini_fallback'):
+                # Drug not in CPIC - use Gemini for full analysis
+                print(f"Using Gemini fallback for {drug}")
+                
+                # All available variants from VCF
+                all_variants = []
+                for gene_variants_list in vcf_data['variants'].values():
+                    if isinstance(gene_variants_list, list):
+                        all_variants.extend(gene_variants_list)
+                
+                # Build Gemini prompt for drug not in CPIC
+                gemini_prompt = f"""
+                Analyze the pharmacogenomic profile for drug: {match_result.get('drug')}
+                
+                Patient VCF Data:
+                - Identified genes: {list(vcf_data.get('variants', {}).keys())}
+                - Total variants: {len(all_variants)}
+                - Variants: {all_variants}
+                
+                Note: This drug is not in the standard CPIC database. Please provide:
+                1. Known pharmacogenomic interactions for this drug
+                2. Relevant genes that might affect metabolism
+                3. Dosing recommendations based on genetic profile
+                4. Risk assessment
+                
+                Provide response in JSON format with clinical_recommendation and llm_generated_explanation.
+                """
+                
+                llm_result = None
+                if LLM_PROVIDER:
+                    try:
+                        print(f"Calling Gemini API with fallback for {drug}...")
+                        llm_result = LLM_PROVIDER.generate_clinical_recommendation(gemini_prompt)
+                        print(f"LLM fallback response: {llm_result}")
+                    except Exception as e:
+                        print(f"⚠ LLM fallback error: {e}")
+                        llm_result = None
+                
+                # Build response with Gemini data
+                json_response = build_response_json(
+                    drug=match_result.get('drug'),
+                    gene="Unknown (Gemini analysis)",
+                    phenotype="Analysis by Gemini",
+                    diplotype=None,
+                    variant_count=len(all_variants),
+                    variants=all_variants,
+                    vcf_parsing_success=vcf_data.get('vcf_parsing_success'),
+                    cpic_level="Custom",
+                    clinical_recommendation=llm_result.get('clinical_recommendation') if llm_result else None,
+                    llm_explanation=llm_result.get('llm_generated_explanation') if llm_result else None
+                )
+                json_responses.append(json_response)
+                print(f"Added Gemini fallback response for {drug}")
+            
             else:
-                print(f"Drug {drug} not valid or no variants: valid={match_result.get('valid')}, gene_found={match_result.get('gene_found_in_vcf')}")
+                # Drug not valid
+                print(f"Drug {drug} not valid: {match_result.get('error')}")
         
         print(f"\nTotal responses: {len(json_responses)}")
         

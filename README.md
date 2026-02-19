@@ -98,16 +98,18 @@ Test with sample file:
 - ✅ Confidence scoring based on data completeness
 
 ### 💊 **Drug Safety Assessment**
-- ✅ Analysis of 5 critical drugs: CODEINE, WARFARIN, CLOPIDOGREL, SIMVASTATIN, FLUOROURACIL
+- ✅ Analysis of 6 critical drugs: CODEINE, WARFARIN, CLOPIDOGREL, SIMVASTATIN, AZATHIOPRINE, FLUOROURACIL
+- ✅ **Gemini Fallback**: Automatic LLM analysis for any drug not in CPIC database
 - ✅ CPIC guideline integration (Level A evidence)
-- ✅ Risk stratification: Safe, Adjust Dosage, Toxic, Review Required
+- ✅ Risk stratification: Safe, Adjust Dosage, Toxic, Ineffective, Unknown
 - ✅ Multi-drug analysis support (comma-separated input)
 
 ### 🤖 **AI-Powered Recommendations**
-- ✅ Google Gemini 1.5 Flash integration for clinical insights
+- ✅ Google Gemini 2.5 Flash integration for clinical insights
 - ✅ Structured JSON responses with dosage adjustments
 - ✅ Mechanism of action explanations
 - ✅ Drug-drug interaction warnings
+- ✅ **Fallback LLM**: Analyzes unsupported drugs using Gemini
 
 ### 🎨 **Interactive Web Interface**
 - ✅ Drag-and-drop file upload with validation
